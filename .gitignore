@@ -42,3 +42,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#project notes
+ProjectNotes.txt
+#Guide to agent
+AGENTS.md
+CLAUDE.md

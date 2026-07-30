@@ -1,4 +1,4 @@
-# HelperAgent
+# Mail Assistant
 
 #### Performs following operations:
 1. send mails.

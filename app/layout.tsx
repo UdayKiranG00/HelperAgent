@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Helper Agent",
+  title: "Mail Assistant",
   description: "Assistant-UI",
 };
 
