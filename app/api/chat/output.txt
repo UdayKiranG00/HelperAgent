@@ -1,0 +1,8 @@
+##Use this skill to fill form for job application
+
+procedure to follow.
+1. look at the page first.
+2. identify fields required to fill.
+3. read profile.md file in current folder to get required fields.
+4. fill the available form fields.
+5. Ask user to get the remaining field details, summarising required data.

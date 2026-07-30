@@ -1,0 +1,16 @@
+{"name":"Pavan Ganguru","mailAddress":"pavanganguru8@gmail.com"}
+{"name":"Uday","mailAddress":"udayganguru2000@gmail.com"} 
+{"name":"Temu","mailAddress":"email@news.temuemail.com"} 
+{"name":"Udayganguru","mailAddress":"udayganguru000@gmail.com"} 
+{"name":"Uganguru","mailAddress":"uganguru@my.bridgeport.edu"} 
+{"name":"RemoteHunter","mailAddress":"notifications@mail.remotehunter.com"} 
+{"name":"Job Alert","mailAddress":"539108356.lensa.com"} 
+{"name":"IRCTC","mailAddress":"irctcpromotions@irctc.co.in"} 
+{"name":"Careers at Cox","mailAddress":"cox@hiring.appcast.io"} 
+{"name":"Suhas from UrbanPro","mailAddress":"urbanpro-no-reply@urbanpro.com"} 
+{"name":"HDFC Bank","mailAddress":"information@mailers.hdfcbank.bank.in"} 
+{"name":"ChatGPT","mailAddress":"noreply@email.openai.com"} 
+{"name":"AI Forum New Zealand","mailAddress":"info@aiforum.org.nz"} 
+{"name":"LinkedIn","mailAddress":"notifications-noreply@linkedin.com"} 
+{"name":"Wipro Job Notification","mailAddress":"wiprolimitp2-jobnotification@noreply55.jobs2web.com"} 
+{"name":"Confidential Careers via LinkedIn","mailAddress":"newsletters-noreply@linkedin.com"}
