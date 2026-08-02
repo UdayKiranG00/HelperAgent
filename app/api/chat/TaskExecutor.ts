@@ -1,19 +1,21 @@
 import { stdin as input, stdout as output } from "node:process";
-import { executeTool } from "./ToolExecutor.js";
-import { generateResponse, summariserPrompt } from "./ModelInterface.js";
+import { executeTool } from "./ToolExecutor.ts";
+import { generateResponse, summariserPrompt } from "./ModelInterface.ts";
 import {
   gmailToolDeclaration,
   commandToolDeclaration,
   planningToolDeclaration,
-} from "./ToolDescriptions.js";
+} from "./ToolDescriptions.ts";
 
-import { playwrightToolsDeclaration } from "./toolDefinitionsPlaywright.js";
+import { playwrightToolsDeclaration } from "./toolDefinitionsPlaywright.ts";
 import {
   getGmailConfig,
   getScratchPad,
   setScratchPad,
   getToolsDefinition,
-} from "./MongoDBInterface.js";
+} from "./MongoDBInterface.ts";
+import * as z from "zod"
+import type {taskType} from "./TaskDS.ts"
 
 const executorPrompt = `you are an expert in task execution, you get a task and required tools to accomplish the task.
 You will also get complete history of previous tasks, tools called and tool responses where you can refer for details.
@@ -23,14 +25,34 @@ Perform the current task. when tool responses have errors try alternative way, h
 Use scratchpad to write your thoughts/approach/notes to carry out the current task, update it first and mind your actions align with it.
 
 ##Output Instructions:
-1. when task accomplishes, output with every single detail.
-2. when task fails, call tool failed_task and output "Unable to finish the task." with reasons.
-
-##Order of input
-1. Previous Task descriptions/responses, tool calls/responses.
-2. Scratch pad.
-3. Current Task to execute with it's tool call/responses.
+1. when task accomplishes, provide json output as success with every single detail.
+2. when task fails, provide json output "Unable to finish the task." with reasons.
 `;
+
+const taskOutputSchema = {
+    type:"json_schema",
+    jsonSchema:{
+        name:"task_execution_output",
+        strict:true,
+        schema:{
+            type:"object",
+            properties:{
+                output:{
+                    type:"string",
+                    description:"result of the task being executed, include every detail.",
+                },
+                status:{
+                    type:"string",
+                    description:"does the task goal achieved or not.",
+                    enum:["Success","Failure"],
+                }
+            },
+            required:["output","status"],
+            additionalProperties:false,
+        },
+    },
+};
+
 let msgHistory = [];
 async function executeTask(taskItem) {
   const recentChatLen = -30;
@@ -38,8 +60,8 @@ async function executeTask(taskItem) {
   let toolNames = taskItem.getTools;
   toolNames.push("task_failed");
   //toolNames.push("save_scratchpad");
-  const taskTools = await getToolsDefinition(toolNames);
-  console.log(taskTools);
+  let taskToolsPromise = getToolsDefinition(toolNames);
+
   let prevMsgHistory = msgHistory;
   let currMsgHistory = [];
   //input
@@ -47,58 +69,48 @@ async function executeTask(taskItem) {
     content: taskItem.getName,
     role: "user",
   };
+  const zSchemaValidator = z.fromJSONSchema(taskOutputSchema.jsonSchema.schema);
+  let modelForJsonOutput = "google/gemma-4-26b-a4b-it:free"
   //console.log(JSON.stringify(prevMsgHistory));
   currMsgHistory.push(taskMessage);
   let conversation = prevMsgHistory.concat(currMsgHistory);
-
-  console.log("conversation: ", JSON.stringify(conversation));
-
-  let modelResponse = await generateResponse(conversation, executorPrompt,taskTools);
+  const taskTools = await taskToolsPromise
+  console.log(taskTools);
+  let modelResponse = await generateResponse(conversation, executorPrompt,taskTools,taskOutputSchema,modelForJsonOutput);
   console.log(JSON.stringify(modelResponse.choices[0].message));
   let count = 1;
   output.write(`count is: ${count}`);
-  let seqToolName = "";
-  let seqToolCount = 0;
   let responseMessage = modelResponse.choices[0].message;
   while (responseMessage.toolCalls?.length > 0) {
     currMsgHistory.push(responseMessage);
-    output.write(
-      `\ntask of id ${taskItem.getId} Length in loop ${count} is: ${responseMessage.toolCalls?.length}`,
-    );
+    output.write(`\ntask of id ${taskItem.getId} Length in loop ${count} is: ${responseMessage.toolCalls?.length}`,);
     let fnCallArr = responseMessage.toolCalls;
+
     for (let i = 0; i < fnCallArr.length; i++) {
       let toolResponse = await executeTool(fnCallArr[i].function);
-      if (seqToolCount == 1 && seqToolName === fnCallArr[i].function.name) {
-        toolResponse = seqToolName + " is failed, do not call me again.\n";
-      }
+
       toolResponse = {
         name: fnCallArr[i].name,
         content: `${toolResponse}`,
         toolCallId: fnCallArr[i].id,
         role: "tool",
       };
+
       output.write(`\n${JSON.stringify(toolResponse)}\n`);
       currMsgHistory.push(toolResponse);
-      if (seqToolName === fnCallArr[i].function.name) {
-        seqToolCount++;
-      } else {
-        seqToolName = fnCallArr[i].function.name;
-        seqToolCount = 1;
-      }
     }
     //scratchPad = await getScratchPad();
     conversation = prevMsgHistory.concat(currMsgHistory);
-    modelResponse = await generateResponse(conversation, executorPrompt,taskTools);
+    modelResponse = await generateResponse(conversation, executorPrompt,taskTools,taskOutputSchema,modelForJsonOutput);
     responseMessage = modelResponse.choices[0].message;
     count++;
   }
-
+  currMsgHistory.push(responseMessage);
+  let taskResult = zSchemaValidator.parse(JSON.parse(responseMessage.content))
   msgHistory = prevMsgHistory.concat(currMsgHistory);
-  await setScratchPad("");
-  output.write(
-    `\nFinal task response ${taskItem.getId} output: ${modelResponse.choices[0].message.content}\n`,
-  );
-  return modelResponse.choices[0].message.content;
+  setScratchPad("");
+  output.write(`\nFinal task response ${taskItem.getId} output: ${JSON.stringify(taskResult)}\n`);
+  return taskResult;
 }
 
 export { executeTask };

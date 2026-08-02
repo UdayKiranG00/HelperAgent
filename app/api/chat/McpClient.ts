@@ -6,7 +6,7 @@ import { stdin as input, stdout as output } from "node:process";
 //MCP Client
 const mcp = new Client({ name: "mcp-client-cli", version: "1.0.0" });
 
-const filePath = "./toolDefinitionsPlaywright.js";
+const filePath = "./toolDefinitionsPlaywright.ts";
 
 async function connectMCPToPlaywright() {
   const command = "npx";

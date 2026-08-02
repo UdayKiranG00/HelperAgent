@@ -2,6 +2,11 @@
 import process from "node:process";
 import { OpenRouter } from "@openrouter/sdk";
 
+import type { components } from '@openrouter/sdk';
+
+// Type an array of messages matching OpenRouter's shape
+type ChatMessage = components['schemas']['ChatCompletionMessageParam'];
+
 const gmailPrompt = `you are a technical gmail manager understands user query, plans and calls tools if necessary and gets tools responses,
                        you will also get a summary of previous conversation(chat history) of user intent, tool call, tool response along with latest user query/tool response,
                        chat history is where the work got paused and can be referred for details, its imperative to read it before taking any action, Call multiple tools at once if possible.
@@ -81,10 +86,8 @@ const categorizerPrompt = `you are an expert decision maker, you will get conten
                             2. "Rejection"(for any job application rejection mail).
                             3. "Other"(if not one of "Promotional" or "Rejection").
                             Here is the mail content: `;
-let retries = 0;
-const openrouter = new OpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY,
-  });
+let retries:number = 0;
+const openrouter = new OpenRouter({apiKey: process.env.OPENROUTER_API_KEY});
 async function generateResponse(
   inputMessages,
   systemPrompt,

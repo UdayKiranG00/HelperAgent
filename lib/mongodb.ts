@@ -11,7 +11,8 @@ const options = {serverApi: {
 
 const userName = process.env.MONGODB_USERNAME;
 const password = process.env.MONGODB_PASSWORD;
-const uri = `mongodb+srv://${userName}:${password}@cluster0.fzx6hvu.mongodb.net/?appName=Cluster0`
+//const uri = `mongodb+srv://${userName}:${password}@cluster0.fzx6hvu.mongodb.net/?appName=Cluster0`
+const uri = `mongodb://${userName}:${password}@ac-egx25yc-shard-00-00.fzx6hvu.mongodb.net:27017,ac-egx25yc-shard-00-01.fzx6hvu.mongodb.net:27017,ac-egx25yc-shard-00-02.fzx6hvu.mongodb.net:27017/?ssl=true&replicaSet=atlas-dw2xzy-shard-0&authSource=admin&appName=Cluster0`
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 

@@ -10,16 +10,17 @@ import {
   toUIMessageStream,
 } from "ai";
 import { z } from "zod";
-import mainFn from "./index.js";
+import mainFn from "./index.ts";
+import { type StreamTextResult } from 'ai';
 export const maxDuration = 150;
 
-function isToolCall(messages) {
+function isToolCall(messages): boolean {
   for (let message of messages) {
     if (message.role === "tool") return true;
   }
   return false;
 }
-export async function POST(req: Request) {
+export async function POST(req: Request) : Promise<Response>{
   let { messages, system, tools } = await req.json();
 
   system = `You are an helpful assistant. you have runAgentTask tool to call an agent, it is a super agent that can execute any task.`;
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
           console.log("Raw task:", JSON.stringify(input));
           let taskDescription = input?.task || input?.description;
           // Pass the actual dynamic task from input into your main function
-          let agentOutput = await mainFn(taskDescription, writer);
+          let agentOutput : string = await mainFn(taskDescription, writer);
 
           return { result: String(agentOutput ?? "") };
         },
@@ -52,11 +53,11 @@ export async function POST(req: Request) {
   const uiMessageStream = createUIMessageStream({
     execute: async ({ writer }) => {
       let modelResponseMessages;
-      let modelResult;
+      let modelResult: StreamTextResult;
       let allMessages = [...modelMessages];
       tools = createTools(writer);
       while (true) {
-        modelResult = streamText({
+        modelResult  = streamText({
           model: google("gemma-4-31b-it"),
           messages: allMessages,
           toolChoice: "auto",

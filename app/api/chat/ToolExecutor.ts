@@ -2,11 +2,11 @@ import { exec } from "child_process";
 import fs from "fs/promises";
 import { stdin as input, stdout as output } from "node:process";
 import * as cheerio from "cheerio";
-import { generateResponse, categorizerPrompt } from "./ModelInterface.js";
-import { categoryToolDeclaration } from "./ToolDescriptions.js";
-import { setScratchPad } from "./MongoDBInterface.js";
-import { callMCPTool } from "./McpClient.js";
-import { appendTaskItem, updateTaskItem } from "./TaskDS.js";
+import { generateResponse, categorizerPrompt } from "./ModelInterface.ts";
+import { categoryToolDeclaration } from "./ToolDescriptions.ts";
+import { setScratchPad } from "./MongoDBInterface.ts";
+import { callMCPTool } from "./McpClient.ts";
+import { appendTaskItem, updateTaskItem } from "./TaskDS.ts";
 
 async function executeCmd(cmd) {
   let cmdResponse = "";

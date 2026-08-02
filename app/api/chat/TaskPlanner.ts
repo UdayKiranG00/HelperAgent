@@ -1,103 +1,33 @@
 import { stdin as input, stdout as output } from "node:process";
-import { executeTool } from "./ToolExecutor.js";
+import { executeTool } from "./ToolExecutor.ts";
 import {
   generateResponse,
   summariserPrompt,
   gmailPrompt,
   playWrightPrompt,
-} from "./ModelInterface.js";
+} from "./ModelInterface.ts";
 import {
   gmailToolDeclaration,
   commandToolDeclaration,
   planningToolDeclaration,
-} from "./ToolDescriptions.js";
-import { playwrightToolsDeclaration } from "./toolDefinitionsPlaywright.js";
+} from "./ToolDescriptions.ts";
+import { playwrightToolsDeclaration } from "./toolDefinitionsPlaywright.ts";
 import {
   getGmailConfig,
   getScratchPad,
   setScratchPad,
-} from "./MongoDBInterface.js";
-import { getTasks,appendTaskItem } from "./TaskDS.js";
+} from "./MongoDBInterface.ts";
+import { getTasks,appendTaskItem } from "./TaskDS.ts";
+import type {taskType} from "./TaskDS.ts"
 import * as z from "zod"
 
-const planningPrompt = `you are an expert task planner. your sole purpose is to create tasks and never run tasks on your own.
-                       Task appending tool(append_task). Each task item has id,task_description,status("pending"),tool names.
-                       1. analyse user request/goal(important).
-                       2. Break down the task to sub-tasks.
-
-                       ##Replanning(Replanning needs when you receive task names/responses and previously failed plan.)
-                       1. Analyse the failure of task and plan, Try an alternate approach to generate a new efficient plan and create tasks.
-
-                       ##Instructions on creating tasks:
-                       1. First analyse all the tools and their descriptions you have, and create tasks based on user request/goal.
-                       2. provide all tool names required even having a probability of 1 in 50., to get the task accomplished.
-                       3. As you are creating tasks, all task status should be "pending".
-                       4. Append tasks only when you are confident.
-                       5. create tasks that only user asked or intended, *never assume*.
-                       6. add all tasks at once, by calling append_task for all tasks.
-                       7. Completed creating tasks? just output "Done creating tasks.".`;
-//3. Combine dependent tasks as a single task.independent sub-tasks that can run parallel
-let taskItems = [];
-async function planTasks(inputQuery) {
-  const allTools = [
-    ...planningToolDeclaration,
-    ...gmailToolDeclaration,
-    ...playwrightToolsDeclaration,
-    ...commandToolDeclaration,
-  ];
-
-  let msgHistory = [];
-  let userMessage = {
-    role: "user",
-    content: inputQuery,
-  };
-  msgHistory.push(userMessage);
-  console.log(userMessage);
-  let modelResponse = await generateResponse(
-    msgHistory,
-    planningPrompt,
-    allTools,
-  );
-  console.log(JSON.stringify(modelResponse.choices[0].message));
-  let responseMessage = modelResponse.choices[0].message;
-  while (responseMessage.toolCalls?.length > 0) {
-    msgHistory.push(responseMessage);
-    for (let i = 0; i < responseMessage.toolCalls.length; i++) {
-      console.log("[Tool Call]: " + responseMessage.toolCalls[i].function.name);
-      console.log(
-        "function args and name: ",
-        JSON.stringify(responseMessage.toolCalls[i].function),
-      );
-      let toolResponse = await executeTool(
-        responseMessage.toolCalls[i].function,
-      );
-      toolResponse = {
-        name: responseMessage.toolCalls[i].function.name,
-        content: toolResponse,
-        toolCallId: responseMessage.toolCalls[i].id,
-        role: "tool",
-      };
-      msgHistory.push(toolResponse);
-    }
-    console.log("msgHistory: \n", JSON.stringify(msgHistory));
-    modelResponse = await generateResponse(
-      msgHistory,
-      planningPrompt,
-      allTools,
-    );
-    responseMessage = modelResponse.choices[0].message;
-  }
-  output.write(`\nPlanning completed appended tasks.\n`);
-
-  return getTasks();
-}
 const evaluatorPrompt = `you are an expert evaluator, your will get a sequence of user and assistant messages,
 analyze assistant response and validate if user query/goal is reached. output text whether goal reached or not with reason and details.
 Output Instructions:
 1. only output either YES or NO in capital letters.
 2. Just one word with out double quotes, do not output even a single extra word or full stop or symbol.
 `;
-async function evaluateTask(userQuery, assistantResponse) {
+async function evaluateTask(userQuery, assistantResponse): "YES"|"NO" {
   let userMessage = {
     role: "user",
     content: userQuery,
@@ -107,12 +37,8 @@ async function evaluateTask(userQuery, assistantResponse) {
     content: assistantResponse,
     refusal: null,
   };
-  let response = await generateResponse(
-    [userMessage, assistantMessage],
-    evaluatorPrompt,
-    [],
-  );
-  return response.choices[0].message.content;
+  let response = await generateResponse([userMessage, assistantMessage],evaluatorPrompt,[]);
+  return response.choices[0].message.content as "YES"|"NO";
 }
 
 const planningPromptBySchema = `you are an expert task planner. your sole purpose is to create tasks and never run tasks on your own.
@@ -146,10 +72,10 @@ const planningPromptBySchema = `you are an expert task planner. your sole purpos
                        tool_name: execute_commands
                        tool_description: execute any command in the windows command prompt like create folders/file, read/write files etc.. in current directory as root.`;
 
-//alternative for creating tasks by schema output instead of toolcall (append_task).
-async function planTasksBySchema(inputQuery) {
+//outputs a structured json of task list with required tools.
+async function planTasksBySchema(inputQuery): taskType[] {
 
-  let msgHistory = [];
+  let msgHistory = [];//type should be union of user,assistant,tool messages types
   let userMessage = {
     role: "user",
     content: inputQuery,
@@ -195,7 +121,7 @@ async function planTasksBySchema(inputQuery) {
     },
   };
   const zSchemaValidator = z.fromJSONSchema(outputSchema.jsonSchema.schema);
-  let modelForJsonOutput = "google/gemma-4-26b-a4b-it:free"
+  const modelForJsonOutput = "google/gemma-4-26b-a4b-it:free"
   let modelResponse = await generateResponse(
     msgHistory,
     planningPromptBySchema,
@@ -217,7 +143,7 @@ async function planTasksBySchema(inputQuery) {
   return getTasks();
 }
 
-export { planTasks, evaluateTask, planTasksBySchema };
+export { evaluateTask, planTasksBySchema };
 
 /*
 Contact Tools
