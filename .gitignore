@@ -3,7 +3,8 @@
 # dependencies
 /.playwright-mcp
 /.idea
-/app/api/chat/credentials.json
+/app/api/chat/GmailEnd/credentials.json
+/app/api/chat/DocumentEnd/sample.txt
 /node_modules
 /.pnp
 .pnp.*

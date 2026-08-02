@@ -17,9 +17,9 @@ import {
   getScratchPad,
   setScratchPad,
 } from "./MongoDBInterface.ts";
-import { getTasks,appendTaskItem } from "./TaskDS.ts";
-import type {taskType} from "./TaskDS.ts"
-import * as z from "zod"
+import { getTasks, appendTaskItem } from "./TaskDS.ts";
+import type { taskType } from "./TaskDS.ts";
+import * as z from "zod";
 
 const evaluatorPrompt = `you are an expert evaluator, your will get a sequence of user and assistant messages,
 analyze assistant response and validate if user query/goal is reached. output text whether goal reached or not with reason and details.
@@ -27,7 +27,7 @@ Output Instructions:
 1. only output either YES or NO in capital letters.
 2. Just one word with out double quotes, do not output even a single extra word or full stop or symbol.
 `;
-async function evaluateTask(userQuery, assistantResponse): "YES"|"NO" {
+async function evaluateTask(userQuery, assistantResponse): "YES" | "NO" {
   let userMessage = {
     role: "user",
     content: userQuery,
@@ -37,8 +37,12 @@ async function evaluateTask(userQuery, assistantResponse): "YES"|"NO" {
     content: assistantResponse,
     refusal: null,
   };
-  let response = await generateResponse([userMessage, assistantMessage],evaluatorPrompt,[]);
-  return response.choices[0].message.content as "YES"|"NO";
+  let response = await generateResponse(
+    [userMessage, assistantMessage],
+    evaluatorPrompt,
+    [],
+  );
+  return response.choices[0].message.content as "YES" | "NO";
 }
 
 const planningPromptBySchema = `you are an expert task planner. your sole purpose is to create tasks and never run tasks on your own.
@@ -74,8 +78,7 @@ const planningPromptBySchema = `you are an expert task planner. your sole purpos
 
 //outputs a structured json of task list with required tools.
 async function planTasksBySchema(inputQuery): taskType[] {
-
-  let msgHistory = [];//type should be union of user,assistant,tool messages types
+  let msgHistory = []; //type should be union of user,assistant,tool messages types
   let userMessage = {
     role: "user",
     content: inputQuery,
@@ -121,22 +124,27 @@ async function planTasksBySchema(inputQuery): taskType[] {
     },
   };
   const zSchemaValidator = z.fromJSONSchema(outputSchema.jsonSchema.schema);
-  const modelForJsonOutput = "google/gemma-4-26b-a4b-it:free"
+  const modelForJsonOutput = "google/gemma-4-26b-a4b-it:free";
   let modelResponse = await generateResponse(
     msgHistory,
     planningPromptBySchema,
     [],
     outputSchema,
-    modelForJsonOutput
+    modelForJsonOutput,
   );
 
-  console.log("json structured output: ", modelResponse.choices[0].message.content)
-  let taskItems = zSchemaValidator.parse(JSON.parse(modelResponse.choices[0].message.content))
-  console.log("validated schema",JSON.stringify(taskItems))
+  console.log(
+    "json structured output: ",
+    modelResponse.choices[0].message.content,
+  );
+  let taskItems = zSchemaValidator.parse(
+    JSON.parse(modelResponse.choices[0].message.content),
+  );
+  console.log("validated schema", JSON.stringify(taskItems));
 
-  for(let i = 0;i<taskItems.tasks.length;i++){
-  let task = taskItems.tasks[i]
-  appendTaskItem(i,task.task_description,"pending",task.tool_names)
+  for (let i = 0; i < taskItems.tasks.length; i++) {
+    let task = taskItems.tasks[i];
+    appendTaskItem(i, task.task_description, "pending", task.tool_names);
   }
   output.write(`\nPlanning completed appended tasks.\n`);
 

@@ -1,9 +1,9 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import mongoClientPromise from "@/lib/mongodb.ts"
+import mongoClientPromise from "@/lib/mongodb.ts";
 
 async function getGmailConfig() {
   try {
-    let client = await mongoClientPromise
+    let client = await mongoClientPromise;
     let pa = client.db("pa");
     let gmailToolsDeclaration = await (
       await pa.collection("tools_coll").find(
@@ -34,7 +34,7 @@ async function getGmailConfig() {
 
 async function getScratchPad() {
   try {
-    let client = await mongoClientPromise
+    let client = await mongoClientPromise;
     let pa = client.db("pa");
     let scratchPadContent = (await pa.collection("general_coll").findOne())
       .content;
@@ -48,7 +48,7 @@ async function getScratchPad() {
 
 async function setScratchPad(approach) {
   try {
-    let client = await mongoClientPromise
+    let client = await mongoClientPromise;
     let pa = client.db("pa");
     await pa
       .collection("general_coll")
@@ -62,7 +62,7 @@ async function setScratchPad(approach) {
 async function getToolsDefinition(toolNames) {
   const toolDefinitions = [];
   try {
-    let client = await mongoClientPromise
+    let client = await mongoClientPromise;
     let pa = client.db("pa");
     for (let toolName of toolNames) {
       try {

@@ -10,8 +10,8 @@ import {
   toUIMessageStream,
 } from "ai";
 import { z } from "zod";
-import mainFn from "./index.ts";
-import { type StreamTextResult } from 'ai';
+import mainFn from "./GmailEnd/index.ts";
+import { type StreamTextResult } from "ai";
 export const maxDuration = 150;
 
 function isToolCall(messages): boolean {
@@ -20,15 +20,14 @@ function isToolCall(messages): boolean {
   }
   return false;
 }
-export async function POST(req: Request) : Promise<Response>{
-  let { messages, system, tools } = await req.json();
-
-  system = `You are an helpful assistant. you have runAgentTask tool to call an agent, it is a super agent that can execute any task.`;
+export async function POST(req: Request): Promise<Response> {
+  const system = `You are an helpful assistant. you have runAgentTask tool to call an agent, it is a super agent that can execute any task.`;
 
   const createTools = (writer) => {
     return {
       runAgentTask: tool({
-        description: "Its a super agent that can do any task, has access to all capabilities and functions.",
+        description:
+          "Its a super agent that can do any task, has access to all capabilities and functions.",
         parameters: z.object({
           task: z
             .string()
@@ -40,16 +39,26 @@ export async function POST(req: Request) : Promise<Response>{
           console.log("Raw task:", JSON.stringify(input));
           let taskDescription = input?.task || input?.description;
           // Pass the actual dynamic task from input into your main function
-          let agentOutput : string = await mainFn(taskDescription, writer);
-
+          try {
+            let agentOutput: string = await mainFn(taskDescription, writer);
+          } catch (error) {
+            throw new Error(`Tool runAgentTask has failed due to ${error}`);
+          }
           return { result: String(agentOutput ?? "") };
         },
       }),
     };
   };
 
-  const modelMessages = await convertToModelMessages(messages);
-
+  try {
+    let { messages, system, tools } = await req.json();
+    const modelMessages = await convertToModelMessages(message);
+  } catch (error) {
+    return Response.json(
+      { error: "ui message conversion failed by ai sdk." + error },
+      { status: 400 },
+    );
+  }
   const uiMessageStream = createUIMessageStream({
     execute: async ({ writer }) => {
       let modelResponseMessages;
@@ -57,7 +66,7 @@ export async function POST(req: Request) : Promise<Response>{
       let allMessages = [...modelMessages];
       tools = createTools(writer);
       while (true) {
-        modelResult  = streamText({
+        modelResult = streamText({
           model: google("gemma-4-31b-it"),
           messages: allMessages,
           toolChoice: "auto",

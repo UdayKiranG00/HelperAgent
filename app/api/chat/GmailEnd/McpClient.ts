@@ -28,9 +28,10 @@ async function closeMCPConnection() {
 
 async function callMCPTool(toolName, toolArgs) {
   try {
-
     let result = await mcp.callTool({ name: toolName, arguments: toolArgs });
-    output.write(`\nMCP tool response for ${toolName}: ${JSON.stringify(result)}\n`);
+    output.write(
+      `\nMCP tool response for ${toolName}: ${JSON.stringify(result)}\n`,
+    );
     output.write(
       `\n content result:  ${JSON.stringify(result.content, null, 2)} \n`,
     );

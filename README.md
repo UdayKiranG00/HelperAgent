@@ -1,6 +1,7 @@
 # Mail Assistant
 
 #### Performs following operations:
+
 1. send mails.
 2. summarises mails.
 3. can perform filter search.

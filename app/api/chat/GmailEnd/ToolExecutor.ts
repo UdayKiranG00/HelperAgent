@@ -73,7 +73,7 @@ async function executeCommands(toolResObj, cmd, args) {
 }
 
 async function readMessageDetails(toolResObj, cmd, args) {
-let params = `{\\"userId\\": \\"me\\", \\"id\\": \\"${args.id}\\"}`
+  let params = `{\\"userId\\": \\"me\\", \\"id\\": \\"${args.id}\\"}`;
   cmd = `gws gmail users messages get --params "${params}"`;
   output.write("\ntool command: " + cmd);
   toolResObj.toolResponse += "[command used]: " + cmd;

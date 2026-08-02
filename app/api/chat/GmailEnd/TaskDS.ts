@@ -4,7 +4,7 @@ class Task {
   status: string;
   output: string;
   tools: string[];
-  constructor(id:number, name: string, status: string, tools: string[]) {
+  constructor(id: number, name: string, status: string, tools: string[]) {
     this.id = id;
     this.name = name;
     this.status = status;
@@ -42,8 +42,8 @@ class Task {
     return this.tools;
   }
 }
-export type taskType = typeof Task
-let taskItems :Task[] = [];
+export type taskType = typeof Task;
+let taskItems: Task[] = [];
 
 function appendTaskItem(id, description, status, tools) {
   let taskObj = new Task(id, description, status, tools);

@@ -2,10 +2,10 @@
 import process from "node:process";
 import { OpenRouter } from "@openrouter/sdk";
 
-import type { components } from '@openrouter/sdk';
+import type { components } from "@openrouter/sdk";
 
 // Type an array of messages matching OpenRouter's shape
-type ChatMessage = components['schemas']['ChatCompletionMessageParam'];
+type ChatMessage = components["schemas"]["ChatCompletionMessageParam"];
 
 const gmailPrompt = `you are a technical gmail manager understands user query, plans and calls tools if necessary and gets tools responses,
                        you will also get a summary of previous conversation(chat history) of user intent, tool call, tool response along with latest user query/tool response,
@@ -86,14 +86,14 @@ const categorizerPrompt = `you are an expert decision maker, you will get conten
                             2. "Rejection"(for any job application rejection mail).
                             3. "Other"(if not one of "Promotional" or "Rejection").
                             Here is the mail content: `;
-let retries:number = 0;
-const openrouter = new OpenRouter({apiKey: process.env.OPENROUTER_API_KEY});
+let retries: number = 0;
+const openrouter = new OpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 async function generateResponse(
   inputMessages,
   systemPrompt,
   toolDeclarations,
   outputSchema,
-  modelId="openrouter/auto-beta",
+  modelId = "openrouter/auto-beta",
 ) {
   let systemMessage = {
     role: "system",
@@ -111,7 +111,9 @@ async function generateResponse(
         requireParameters: true,
       },
     };
-    if (outputSchema) {chatRequestObj["responseFormat"] = outputSchema;}
+    if (outputSchema) {
+      chatRequestObj["responseFormat"] = outputSchema;
+    }
 
     console.log("Before model call: ", JSON.stringify(chatRequestObj));
     const response = await openrouter.chat.send({
@@ -125,7 +127,12 @@ async function generateResponse(
     console.log("model error is: ", JSON.stringify(error));
     if (retries < 3) {
       retries++;
-      return generateResponse(inputMessages, systemPrompt, toolDeclarations, outputSchema);
+      return generateResponse(
+        inputMessages,
+        systemPrompt,
+        toolDeclarations,
+        outputSchema,
+      );
     }
     return "Error communicating with Gemini API:";
   }
